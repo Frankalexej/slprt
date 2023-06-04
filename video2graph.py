@@ -3,3 +3,13 @@
 # 1. Detect
 # 2. Write into graph file (?)
 # 3. Add it on original video, and save the video to another dir in src
+import mediapipe as mp
+from mediapipe.tasks import python
+from mediapipe.tasks.python import vision
+
+
+def main(): 
+    pass
+
+if __name__ == "__main__":
+    main()
