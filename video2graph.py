@@ -9,7 +9,7 @@ from mediapipe.tasks.python import vision
 
 
 def main(): 
-    pass
+    print("Hello world! ")
 
 if __name__ == "__main__":
     main()

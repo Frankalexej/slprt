@@ -1,0 +1,5 @@
+20230604
+- 
+problem: cannot install mediapipe
+debug: mediapipe does not support python version >=11, only 3.7~3.10 supported
+solution: change python to 3.10
