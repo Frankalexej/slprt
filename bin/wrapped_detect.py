@@ -56,7 +56,7 @@ class DetectionWrapper:
 
         options = HandLandmarkerOptions(
             base_options=BaseOptions(model_asset_path=MP_MODEL_PATH),
-            running_mode=VisionRunningMode.VIDEO)
+            running_mode=VisionRunningMode.IMAGE, num_hands=2)
         self.detector = HandLandmarker.create_from_options(options)
 
         
@@ -100,7 +100,7 @@ class DetectionWrapper:
             # handedness output and process it with MediaPipe Hands.
             # results = hands.process(cv2.flip(cv2.cvtColor(image, cv2.COLOR_BGR2RGB), 1))
             mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image)
-            results = self.detector.detect_for_video(mp_image, self.f2ms(idx))
+            results = self.detector.detect(mp_image)
 
             # ResultIO.save("{}{}_{:0>6}.pkl".format(self.dd, self.name, idx), results)
 
