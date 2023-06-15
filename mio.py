@@ -1,5 +1,6 @@
 import pickle
 import collections
+import os
 
 class AnyIO: 
     # This class is a wrapper to read and write pickle files
@@ -12,7 +13,6 @@ class AnyIO:
     def save(IOPath, content): 
         with open(IOPath, 'wb') as file:
             pickle.dump(content, file)
-
 
 class ResultIO: 
     # This class is a wrapper to read and write SolutionOutput objects
