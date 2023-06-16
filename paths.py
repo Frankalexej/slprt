@@ -15,6 +15,8 @@ rend_vid_dir = rend_dir + "vid/"
 rend_pic_dir = rend_dir + "pic/"
 
 graph_dir = src_dir + "graph/"
+
+spec_dir = src_dir + "spec/"
 # End of define
 
 if __name__ == '__main__':
