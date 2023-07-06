@@ -16,6 +16,8 @@ rend_pic_dir = rend_dir + "pic/"
 
 graph_dir = src_dir + "graph/"
 
+feats_dir = src_dir + "feats/"
+
 spec_dir = src_dir + "spec/"
 # End of define
 
