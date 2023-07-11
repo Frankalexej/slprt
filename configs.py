@@ -24,3 +24,11 @@ mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 
 el = [list(element) for element in list(mp_hands.HAND_CONNECTIONS)]
+
+
+
+
+
+FLAG_OK = 0
+FLAG_NONE = 1
+FLAG_FILLED = 2
