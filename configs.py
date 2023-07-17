@@ -28,7 +28,6 @@ el = [list(element) for element in list(mp_hands.HAND_CONNECTIONS)]
 
 
 
-
-FLAG_OK = 0
-FLAG_NONE = 1
-FLAG_FILLED = 2
+FLAG_NONE = 0
+FLAG_OK = 1
+FLAG_FILLED = 2 # set FLAG_FILLED = 1 if include interpolated data in interpolation next round
