@@ -93,17 +93,18 @@ class GraphTool:
         window_size: number of elements to consider on one side of the window
         """
         interpolated_features = np.copy(self.features)
+        interpolated_flag = np.copy(self.flag)
 
         upper_bound = self.features.shape[0]
 
         # Iterate through each position in the flags array
         for i in range(upper_bound):
             # slide through the array; features and flag are of same length
-            if self.flag[i] == FLAG_NONE:   # if this frame is not filled
+            if interpolated_flag[i] == FLAG_NONE:   # if this frame is not filled
                 start_idx = max(0, i - window_size) # either lower bound of array or edge of window
                 end_idx = min(i + window_size + 1, upper_bound) # +1 because end_idx is not considered in slices
 
-                window_flags = self.flag[start_idx:end_idx]
+                window_flags = interpolated_flag[start_idx:end_idx]
                 # Check if there are any OK features in the window
                 if FLAG_OK in window_flags:
                     window_features = self.features[start_idx:end_idx]
@@ -117,50 +118,16 @@ class GraphTool:
 
                     interpolated_features[i] = interpolated_feature
                 else: 
-                    if FLAG_OK not in self.flag: 
+                    if FLAG_OK not in interpolated_flag: 
                         # there is nothing to find, then use the old one
                         interpolated_features[i] = self.features[i]
                     else: 
                         # if there is any usable frame to interpolate, find the nearest as the transfer index
-                        transfer_index = self._find_closest(self.flag, i, FLAG_OK)
+                        transfer_index = self._find_closest(interpolated_flag, i, FLAG_OK)
                         interpolated_features[i] = self.features[transfer_index]
 
-                    # # np.min(np.where(window_flags == FLAG_OK)[0])
-                    # left_idx = np.argmax(self.flag[:start_idx][::-1] == FLAG_OK)
-                    # right_idx = np.argmax(self.flag[end_idx:] == FLAG_OK) + end_idx
+                interpolated_flag[i] = FLAG_FILLED
 
-                    # if left_idx > -1 and right_idx < self.flag.shape[0]:
-                    #     if i - start_idx < right_idx - i:
-                    #         nearest_index = start_idx - left_idx - 1
-                    #     else:
-                    #         nearest_index = right_idx
-                    #     interpolated_features[i] = self.features[nearest_index]
-                    # elif left_idx > -1:
-                    #     nearest_index = start_idx - left_idx - 1
-                    #     interpolated_features[i] = self.features[nearest_index]
-                    # elif right_idx < self.flag.shape[0]:
-                    #     nearest_index = right_idx
-                    #     interpolated_features[i] = self.features[nearest_index]
-                    # else:
-                    #     interpolated_features[i] = interpolated_features[i]
-
-                self.flag[i] = FLAG_FILLED
-
-        return interpolated_features
-
-# Example usage
-# Assuming you have the 'flags' and 'features' arrays
-
-# Define the flag values
-FLAG_OK = 0
-FLAG_NONE = 1
-
-# Specify the window size
-window_size = 5
-
-# Perform sliding window interpolation
-interpolated_features = sliding_window_interpolation(features, flags, window_size)
-
-# Print the interpolated features
-print("Interpolated Features:")
-print(interpolated_features)
+        self.interpolated_features = interpolated_features
+        self.interpolated_flag = interpolated_flag
+        return
