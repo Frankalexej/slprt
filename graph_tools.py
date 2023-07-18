@@ -2,7 +2,10 @@ import os
 import glob
 import json
 import numpy as np
+import pandas as pd
 from google.protobuf.json_format import MessageToDict
+import plotly.express as px
+from scipy.spatial import distance as d
 from configs import *
 
 def lm_has_side_and_is_at(lm, side):
@@ -131,3 +134,108 @@ class GraphTool:
         self.interpolated_features = interpolated_features
         self.interpolated_flag = interpolated_flag
         return
+
+
+class Hand:
+    WRIST = 0
+    ROOT = [1, 5, 9, 13, 17]
+    PIP = [2, 6, 10, 14, 18]
+    DIP = [3, 7, 11, 15, 19]
+    TIP = [4, 8, 12, 16, 20]
+    FINGER_LIST = ["thumb", "index", "middle", "ring", "pinky"]
+
+
+class Extract: 
+    def __init__(self, graph_features):
+        # shape: (frame, feat, dim)
+        self.graph_features = graph_features
+
+    def _get_feats(self, feats_list): 
+        return self.graph_features[:, feats_list, :]
+
+    @staticmethod
+    def _dist_between(a, b, mode="3d"):
+        assert a.shape[0] == b.shape[0]
+        # 3d = consider all x y z
+        distance = np.sqrt(np.sum((a - b)**2, axis=-1))
+        return distance
+    
+    def palm(self, z=False): 
+        if z: 
+            return self.graph_features[:, 0, :]
+        else: 
+            self.graph_features[:, 0, :2]
+        
+    def tip_root_dist(self): 
+        return self._dist_between(self._get_feats(Hand.TIP), self._get_feats(Hand.ROOT))
+    
+    def 
+
+
+class Plotter: 
+    @staticmethod
+    def plot_line_graph(data, legends, title="Graph Plot", x_axis_label="Frames", y_axis_label="Values"):
+        """
+        Plot a line graph of a sequence of data using Plotly Express.
+
+        Parameters:
+            data (numpy.ndarray): The data to be plotted, with shape (frames, features).
+            legend (list): A list containing the legend names for each feature.
+            x_axis_label (str): Label for the x-axis. Default is "Frames".
+            y_axis_label (str): Label for the y-axis. Default is "Values".
+            title (str): Title of the plot. Default is "Line Graph".
+
+        Returns:
+            None (displays the plot).
+
+        Example usage:
+            data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+            legend = ['Feature 1', 'Feature 2', 'Feature 3']
+            plot_line_graph(data, legend)
+        """
+        # Get the number of frames and features from the data shape
+        frames, features = data.shape
+
+        # Create a DataFrame for the data with appropriate column names
+        df = pd.DataFrame(data, columns=legends)
+
+        # Create the line plot using Plotly Express
+        fig = px.line(df, x=np.arange(frames), y=legends, title=title)
+
+        # Customize the plot layout
+        fig.update_layout(
+            xaxis_title=x_axis_label,
+            yaxis_title=y_axis_label,
+            title={
+                'text': title,
+                'x': 0.5,  # Align the title to the middle
+                'xanchor': 'center',
+                'yanchor': 'top',
+                'font': {'size': 24, 'family': 'Arial'}
+            }
+        )
+
+        # Get the HTML code for the plot
+        html_code = fig.to_html()
+
+        # Show the plot
+        # fig.show()
+        return html_code
+
+    @staticmethod
+    def write_to_html(html_code, filename):
+        """
+        Write the HTML code to an HTML file.
+
+        Parameters:
+            html_code (str): The HTML code to be written to the file.
+            filename (str): The name of the HTML file to be created.
+
+        Returns:
+            None.
+
+        Example usage:
+            write_to_html(html_code, 'output_plot.html')
+        """
+        with open(filename, 'w') as file:
+            file.write(html_code)
