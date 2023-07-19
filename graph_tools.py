@@ -5,7 +5,9 @@ import numpy as np
 import pandas as pd
 from google.protobuf.json_format import MessageToDict
 import plotly.express as px
+import plotly.graph_objects as go
 from scipy.spatial import distance as d
+from scipy.signal import savgol_filter
 from configs import *
 
 def lm_has_side_and_is_at(lm, side):
@@ -91,7 +93,7 @@ class GraphTool:
         return closest_index
 
     # Function to perform sliding window linear interpolation
-    def interpolate(self, window_size=2):
+    def interpolate(self, window_size=3):
         """
         window_size: number of elements to consider on one side of the window
         """
@@ -136,13 +138,71 @@ class GraphTool:
         return
 
 
+class Smoother: 
+    @staticmethod
+    def moving_average(data, window_size=3):
+        # Pad the data at the beginning and end to handle edge cases, it will copy the first element
+        padded_data = np.pad(data, ((window_size, window_size), (0, 0), (0, 0)), mode='edge')
+
+        # Calculate the moving average for each feature independently using convolution
+        weights = np.ones(2 * window_size + 1) / (2 * window_size + 1)
+        smoothed_data = np.apply_along_axis(lambda x: np.convolve(x, weights, mode='valid'), axis=0, arr=padded_data)
+
+        return smoothed_data
+    
+    @staticmethod
+    def exponential_moving_average(data, alpha=0.9):
+        # Get the dimensions of the input data
+        frame, feature, _ = data.shape
+
+        # Create an empty array to store the smoothed data
+        smoothed_data = np.zeros((frame, feature, 3))
+
+        # Calculate the exponential moving average for each feature independently
+        smoothed_data[:, :, :] = data[:, :, :]  # Copy the original data
+
+        for t in range(1, frame):
+            smoothed_data[t, :, :] = (1 - alpha) * data[t, :, :] + alpha * smoothed_data[t - 1, :, :]
+
+        return smoothed_data
+    
+    @staticmethod
+    def savitzky_golay_filter(data, window_size=5, polyorder=2):
+        # Get the dimensions of the input data
+        frame, feature, _ = data.shape
+
+        # Reshape data for vectorized processing
+        reshaped_data = data.reshape(frame * feature, 3)
+
+        # Apply the Savitzky-Golay filter to the reshaped data
+        smoothed_reshaped_data = np.apply_along_axis(lambda x: savgol_filter(x, window_size, polyorder), axis=0, arr=reshaped_data)
+
+        # Reshape smoothed data back to original shape
+        smoothed_data = smoothed_reshaped_data.reshape(frame, feature, 3)
+
+        return smoothed_data
+
+
+class GoodDict: 
+    def __init__(self, thumb, index, middle, ring, pinky):
+        self.THUMB = thumb
+        self.INDEX = index
+        self.MIDDLE = middle
+        self.RING = ring
+        self.PINKY = pinky
+
+    def get_all(self):
+        return [self.THUMB, self.INDEX, self.MIDDLE, self.RING, self.PINKY]
+
+
 class Hand:
     WRIST = 0
-    ROOT = [1, 5, 9, 13, 17]
-    PIP = [2, 6, 10, 14, 18]
-    DIP = [3, 7, 11, 15, 19]
-    TIP = [4, 8, 12, 16, 20]
+    ROOT = GoodDict(1, 5, 9, 13, 17)
+    PIP = GoodDict(2, 6, 10, 14, 18)
+    DIP = GoodDict(3, 7, 11, 15, 19)
+    TIP = GoodDict(4, 8, 12, 16, 20)
     FINGER_LIST = ["thumb", "index", "middle", "ring", "pinky"]
+
 
 
 class Extract: 
@@ -159,40 +219,73 @@ class Extract:
         # 3d = consider all x y z
         distance = np.sqrt(np.sum((a - b)**2, axis=-1))
         return distance
-    
+
+    @staticmethod
+    def _point_to_vec(pair): 
+        return pair[..., 1, :] - pair[..., 0, :]
+
+    @staticmethod
+    def _angle_between(vectors1, vectors2, default_angle=0.0):
+        norms1 = np.linalg.norm(vectors1, axis=-1)
+        norms2 = np.linalg.norm(vectors2, axis=-1)
+
+        default_mask = np.logical_or(norms1 == 0, norms2 == 0)
+        dot_products = np.sum(vectors1 * vectors2, axis=-1)
+
+        cos_angles = dot_products / (norms1 * norms2)
+        cos_angles[default_mask] = 1.0
+
+        angles_rad = np.arccos(np.clip(cos_angles, -1.0, 1.0))
+        angles_deg = np.degrees(angles_rad)
+
+        angles_deg[default_mask] = default_angle
+
+        return angles_deg
+
     def palm(self, z=False): 
         if z: 
-            return self.graph_features[:, 0, :]
+            return self.graph_features[:, Hand.WRIST, :]
         else: 
-            self.graph_features[:, 0, :2]
+            return self.graph_features[:, Hand.WRIST, :2]
         
     def tip_root_dist(self): 
-        return self._dist_between(self._get_feats(Hand.TIP), self._get_feats(Hand.ROOT))
+        return self._dist_between(self._get_feats(Hand.TIP.get_all()), self._get_feats(Hand.ROOT.get_all()))
     
-    def 
+    def root_finger_angle(self): 
+        num_fingers = len(Hand.ROOT.get_all())
+        # get start and end points
+        root_line = self._get_feats([Hand.ROOT.INDEX, Hand.ROOT.PINKY])
+        # (frame, 2, 3) -> (frame, finger, 2, 3)
+        root_line = root_line[:, np.newaxis, ...]
+        # root_line = np.repeat(root_line[:, np.newaxis, ...], num_fingers, 1)
+
+        root_points = self._get_feats(Hand.ROOT.get_all())
+        tip_points = self._get_feats(Hand.TIP.get_all())
+        finger_lines = np.concatenate(
+            (root_points[:, :, np.newaxis, ...], 
+             tip_points[:, :, np.newaxis, ...]), 
+             axis=2)
+        return self._angle_between(
+            self._point_to_vec(root_line), 
+            self._point_to_vec(finger_lines)
+        )
+    
+    def palm_angle(self): 
+        # y-axis upwards normal, perpendicular to the transverse plane
+        normal_vector = np.array([0, -1, 0])
+        normal_vector = normal_vector[np.newaxis, np.newaxis, :]
+
+        palm_vector = self._point_to_vec(
+            self._get_feats([Hand.WRIST, Hand.ROOT.INDEX])
+        )[:, np.newaxis, ...]
+
+        return self._angle_between(normal_vector, palm_vector)
+
 
 
 class Plotter: 
     @staticmethod
     def plot_line_graph(data, legends, title="Graph Plot", x_axis_label="Frames", y_axis_label="Values"):
-        """
-        Plot a line graph of a sequence of data using Plotly Express.
-
-        Parameters:
-            data (numpy.ndarray): The data to be plotted, with shape (frames, features).
-            legend (list): A list containing the legend names for each feature.
-            x_axis_label (str): Label for the x-axis. Default is "Frames".
-            y_axis_label (str): Label for the y-axis. Default is "Values".
-            title (str): Title of the plot. Default is "Line Graph".
-
-        Returns:
-            None (displays the plot).
-
-        Example usage:
-            data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-            legend = ['Feature 1', 'Feature 2', 'Feature 3']
-            plot_line_graph(data, legend)
-        """
         # Get the number of frames and features from the data shape
         frames, features = data.shape
 
@@ -221,6 +314,47 @@ class Plotter:
         # Show the plot
         # fig.show()
         return html_code
+    
+    @staticmethod
+    def plot_spectrogram(data, title="Graph Plot", x_axis_label="Frames", y_axis_label="Feature"): 
+        """
+        data is of shape (frame, features, dimensions)
+        Since we only draw x and y, only consider the first two of the three dimensions (third dim)
+        """
+        time_steps, frequencies = data.shape
+
+        # Create the x and y axis values for the spectrogram
+        time_axis = np.arange(time_steps)
+        freq_axis = np.arange(frequencies)
+
+        # Create the figure and add the heatmap or surface trace
+        fig = go.Figure()
+
+        # Using Heatmap (Recommended for large datasets)
+        fig.add_trace(go.Heatmap(z=data, x=time_axis, y=freq_axis, colorscale='gray'))
+
+        # OR Using Surface (Recommended for small datasets)
+        # fig.add_trace(go.Surface(z=data, x=time_axis, y=freq_axis))
+
+        # Customize the plot layout
+        fig.update_layout(
+            xaxis_title=x_axis_label,
+            yaxis_title=y_axis_label,
+            title={
+                'text': title,
+                'x': 0.5,  # Align the title to the middle
+                'xanchor': 'center',
+                'yanchor': 'top',
+                'font': {'size': 24, 'family': 'Arial'}
+            }
+        )
+
+        # Get the HTML code for the plot
+        html_code = fig.to_html()
+
+        return html_code
+
+
 
     @staticmethod
     def write_to_html(html_code, filename):
