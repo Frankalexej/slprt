@@ -19,6 +19,8 @@ graph_dir = src_dir + "graph/"
 feats_dir = src_dir + "feats/"
 
 spec_dir = src_dir + "spec/"
+
+spec_pic_dir = src_dir + "spec_pic/"
 # End of define
 
 if __name__ == '__main__':

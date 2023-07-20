@@ -6,6 +6,8 @@ import pandas as pd
 from google.protobuf.json_format import MessageToDict
 import plotly.express as px
 import plotly.graph_objects as go
+# from plotly.io import to_image
+import matplotlib.pyplot as plt
 from scipy.spatial import distance as d
 from scipy.signal import savgol_filter
 from configs import *
@@ -285,7 +287,7 @@ class Extract:
 
 class Plotter: 
     @staticmethod
-    def plot_line_graph(data, legends, title="Graph Plot", x_axis_label="Frames", y_axis_label="Values"):
+    def plot_line_graph(data, legends, title="Graph Plot", x_axis_label="Frames", y_axis_label="Values", save_path="./test"):
         # Get the number of frames and features from the data shape
         frames, features = data.shape
 
@@ -308,15 +310,31 @@ class Plotter:
             }
         )
 
+        # with open("{}.png".format(save_path), 'wb') as f:
+        #     f.write(to_image(fig, format="png", width=None, height=None, scale=None, validate=True, engine='orca'))
+
         # Get the HTML code for the plot
         html_code = fig.to_html()
 
-        # Show the plot
-        # fig.show()
+        # fig.write_image("{}.png".format(save_path))
+
+        for labelidx in range(len(legends)): 
+            label = legends[labelidx]
+            # Plot the arrays
+            plt.plot(data[:, labelidx], label=label)
+
+        # Customize the graph
+        plt.xlabel(x_axis_label)
+        plt.ylabel(y_axis_label)
+        plt.title(title)
+        plt.legend()
+        plt.savefig('{}.jpg'.format(save_path), format='jpeg', dpi=300)
+        plt.close()
+
         return html_code
     
     @staticmethod
-    def plot_spectrogram(data, title="Graph Plot", x_axis_label="Frames", y_axis_label="Feature"): 
+    def plot_spectrogram(data, title="Graph Plot", x_axis_label="Frames", y_axis_label="Feature", save_path="./test"): 
         """
         data is of shape (frame, features, dimensions)
         Since we only draw x and y, only consider the first two of the three dimensions (third dim)
@@ -349,8 +367,22 @@ class Plotter:
             }
         )
 
+        # with open("{}.png".format(save_path), 'wb') as f:
+        #     f.write(to_image(fig, format="png", width=None, height=None, scale=None, validate=True, engine='orca'))
+
         # Get the HTML code for the plot
         html_code = fig.to_html()
+
+        # fig.write_image("{}.png".format(save_path))
+
+        fig, axs = plt.subplots(1, 1)
+        axs.set_title(title)
+        axs.set_ylabel(y_axis_label)
+        axs.set_xlabel(x_axis_label)
+        im = axs.imshow(data, origin="lower", aspect="auto", cmap='gray_r')
+        fig.colorbar(im, ax=axs)
+        plt.savefig('{}.jpg'.format(save_path), format='jpeg', dpi=300)
+        plt.close()
 
         return html_code
 
