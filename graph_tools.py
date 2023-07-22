@@ -349,7 +349,7 @@ class Plotter:
         fig = go.Figure()
 
         # Using Heatmap (Recommended for large datasets)
-        fig.add_trace(go.Heatmap(z=data, x=time_axis, y=freq_axis, colorscale='gray'))
+        fig.add_trace(go.Heatmap(z=data.T, x=time_axis, y=freq_axis, colorscale='gray'))    # , zmax=1.0, zmin=0.0
 
         # OR Using Surface (Recommended for small datasets)
         # fig.add_trace(go.Surface(z=data, x=time_axis, y=freq_axis))
@@ -379,7 +379,7 @@ class Plotter:
         axs.set_title(title)
         axs.set_ylabel(y_axis_label)
         axs.set_xlabel(x_axis_label)
-        im = axs.imshow(data, origin="lower", aspect="auto", cmap='gray_r')
+        im = axs.imshow(data.T, origin="lower", aspect="auto", cmap='gray_r')   # , vmin=0.0, vmax=1.0
         fig.colorbar(im, ax=axs)
         plt.savefig('{}.jpg'.format(save_path), format='jpeg', dpi=300)
         plt.close()
