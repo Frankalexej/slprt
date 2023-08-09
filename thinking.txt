@@ -1,0 +1,8 @@
+What I am having in mind is temorarily not to use GCN or any graph-based model, but simply plot (translate) the extracted (detected) graph into a fixed-sized picture. And use CNN to process this picture. 
+
+Or, more directly, first ignore the graph structure of the hand and just concatenate all the 21 landmarks together to get a 21 x 3 (?) matrix {or more likely similar to our last work, a vector of the 21 landmarks}. Then simply use Linear layers to (perhaps Residual Blocks) to transform the vector into a smaller vector that we think can grasp the core features of handshapes. 
+
+
+
+!!!Problem: 
+the data is having quite a lot without obvious hs. These mainly come from interpolated data, probably we should ignore them for better data quality. The way to ignore them is: ignore all those frames that are interpolated. 

@@ -139,6 +139,10 @@ class GraphTool:
         self.interpolated_flag = interpolated_flag
         return
 
+    # TODO: fill this in later. 
+    def delete_empty(self): 
+        # here: use FLAG_NONE or FLAG_FILLED to filter out all those that are not detected or have been interpolated and use this filter to clean the data. 
+        pass
 
 class Smoother: 
     @staticmethod
