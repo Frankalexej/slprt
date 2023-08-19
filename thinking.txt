@@ -6,3 +6,11 @@ Or, more directly, first ignore the graph structure of the hand and just concate
 
 !!!Problem: 
 the data is having quite a lot without obvious hs. These mainly come from interpolated data, probably we should ignore them for better data quality. The way to ignore them is: ignore all those frames that are interpolated. 
+
+
+
+
+
+
+1. The reason I did not get the handshape chart is because the pdf file's handshape font is not rendered as picture. Therefore, since my computer does not have the CUHK HKSL HS font, it won't show. I installed it and it works. 
+2. Out of the 981 entries, 767 are monomorphemic. Out of these only 159 are bimanual and heteromorphic. Not all are dextrous (=DH is right hand) but it almost. 

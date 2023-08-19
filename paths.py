@@ -23,9 +23,12 @@ spec_dir = src_dir + "spec/"
 spec_pic_dir = src_dir + "spec_pic/"
 # End of define
 
+# define file paths
+guide_path = src_dir + "HKSL_Citation_Phon_Coding_full_guide.csv"
+
 if __name__ == '__main__':
     # For all paths defined, run mk()
     for name, value in globals().copy().items():
-        if isinstance(value, str) and not name.startswith("__"):
+        if isinstance(value, str) and name.endswith("/") and not name.startswith("__"):
             globals()[name] = mk(value)
             # print(globals()[name])
