@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="outstyle.css">
+</head>
+<body>
+
+<div class="container">
+  <input type="number" id="integerInput" min="0">
+  <div class="output" id="outputDiv"></div>
+</div>
+
+<script>
+const integerInput = document.getElementById('integerInput');
+const outputDiv = document.getElementById('outputDiv');
+
+const stringsList = {}; // Replace this with your list of strings
+
+// Update the output when the input value changes
+integerInput.addEventListener('input', () => {
+  const selectedIndex = parseInt(integerInput.value);
+  
+  if (selectedIndex >= 0 && selectedIndex < stringsList.length) {
+    const selectedString = stringsList[selectedIndex];
+    outputDiv.textContent = `${selectedString}`;
+  } else {
+    outputDiv.textContent = "無";
+  }
+});
+</script>
+
+</body>
+</html>

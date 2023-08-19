@@ -18,7 +18,7 @@ def lm_has_side_and_is_at(lm, side):
     mh = lm.multi_handedness
     if mh is None: 
         return False, 0
-    
+
     max_score = -1
     max_index = 0
     found = False
@@ -139,10 +139,25 @@ class GraphTool:
         self.interpolated_flag = interpolated_flag
         return
 
-    # TODO: fill this in later. 
     def delete_empty(self): 
         # here: use FLAG_NONE or FLAG_FILLED to filter out all those that are not detected or have been interpolated and use this filter to clean the data. 
-        pass
+        # here we use the detection method same as in interpolation to work out which ones are missing. 
+
+        # Create a boolean mask to identify items with FLAG_NONE
+        mask = self.flag == FLAG_OK
+        # Apply the mask to the features array
+        filtered_features = self.features[mask]
+        filtered_flag = self.flag[mask]
+        self.flag = filtered_flag
+        self.features = filtered_features
+        # will replace the core data, instead of returning them 
+    
+    def get_features(self, flatten=False): 
+        if flatten: 
+            frame, lm, dim = self.features.shape
+            return self.features.reshape((frame, lm * dim))
+        else: 
+            return self.features.copy()
 
 class Smoother: 
     @staticmethod

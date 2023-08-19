@@ -5,8 +5,12 @@
 # LIBS
 from graph_tools import GraphTool
 from paths import *
+from mio import NP_Compress
 import os
 import pandas as pd
+import numpy as np
+from torch.utils.data import Dataset
+import torch
 # START
 
 class GuideExtract:
@@ -15,6 +19,9 @@ class GuideExtract:
         self.monomorph = monomorph
         self.dexter = dexter
         self.sinister = sinister
+    
+    def is_ok(self):
+        return self.monomorph == 1 and not (self.dexter and self.sinister)
 
 
 class GuideReader:
@@ -58,24 +65,82 @@ class GuideReader:
                 # non-monomorphic
                 return GuideExtract()
 
-
 class HandLandmarkData: 
-    def __init__(self, all_graph_dir):
+    def __init__(self, all_graph_dir=det_dir):
         """
         all_graph_dir: the hyper-dir of each video's hand lms
         """
-        # TODO: work out how to preassume the shape
-        self.data = None
-        self.tag = None
-        guidedata = GuideReader(guide_path)
-        for vd in os.listdir(det_dir): 
-            for clip in os.listdir(det_dir + vd + "/"): 
-                # here look for the corresponding entry in the annotation file
-                # and if 
-                for side in ["Right", "Left"]:
-                    find_name = "{}_{}".format(side, clip)
-                    gt = GraphTool(graph_dir, find_name)
-                    # interpolation is done before training, since there is a lot of missing 
-                    gt.interpolate(window_size=2) # might not be needed
-                    gt.delete_empty()
+        # init data and tag
+        self.data = np.empty((0, 21, 3))
+        self.tag = np.array([])
 
+        guidedata = GuideReader(guide_path)
+        for vd in os.listdir(all_graph_dir): 
+            for clip in os.listdir(all_graph_dir + vd + "/"): 
+                extract = guidedata.extract(clip)
+                if extract.is_ok(): 
+                    if extract.dexter: 
+                        feats = self.__grab_data__(clip, "Right")   # (x, 21, 3)
+                        self.data = np.concatenate((self.data, feats))
+                        frame, lm, dim = feats.shape
+                        tag = np.array([extract.dexter] * frame)
+                        self.tag = np.concatenate((self.tag, tag))
+                    
+                    if extract.sinister: 
+                        self.__grab_data__(clip, "Left")
+                        self.data = np.concatenate((self.data, feats))
+                        frame, lm, dim = feats.shape
+                        tag = np.array([extract.dexter] * frame)
+                        self.tag = np.concatenate((self.tag, tag))
+                else: 
+                    # else pass this file, because no data could match
+                    continue
+        print("Data initiated. Count: " + str(self.tag.shape[0]))
+
+    @staticmethod
+    def __grab_data__(filename, side): 
+        find_name = "{}_{}".format(side, filename)
+        gt = GraphTool(graph_dir, find_name)
+        gt.delete_empty()
+        return gt.get_features(flatten=False)
+    
+    def save_data(self, file_prefix): 
+        NP_Compress.save(self.data, os.path.join(data_dir, file_prefix + "_data.npz"))
+        NP_Compress.save(self.tag, os.path.join(data_dir, file_prefix + "_tag.npz"))
+
+
+# Here we define the dataset as will be used in training
+
+class HandshapeDataset(Dataset): 
+    def __init__(self, data_path, tag_path):
+        self.data = NP_Compress.load(data_path)
+        self.tag = NP_Compress.load(tag_path)
+        self.dictionary = {tag: index for index, tag in enumerate(sorted(set(self.tag)))}
+        
+    # REQUIRED: provide size of dataset (= #images)
+    def __len__(self) :
+        return self.tag.shape[0]
+
+    def __getitem__(self, idx): 
+        return self.data[idx], self.dictionary[self.tag[idx]]
+    
+
+class HandshapeDict: 
+    def __init__(self, tag_path):
+        tag = NP_Compress.load(tag_path)
+        self.dictionary = {tag: index for index, tag in enumerate(sorted(set(tag)))}
+        self.reverse_dictionary = {v: k for k, v in self.dictionary.items()}
+    
+    def get_dict(self): 
+        return self.dictionary
+    
+    def batch_map(self, class_index_tensor): 
+        class_list = [self.reverse_dictionary[index.item()] for index in class_index_tensor]
+        return class_list
+
+
+
+
+if __name__ == '__main__':
+    hlmd = HandLandmarkData()
+    hlmd.save_data("cynthia_data")

@@ -14,3 +14,6 @@ the data is having quite a lot without obvious hs. These mainly come from interp
 
 1. The reason I did not get the handshape chart is because the pdf file's handshape font is not rendered as picture. Therefore, since my computer does not have the CUHK HKSL HS font, it won't show. I installed it and it works. 
 2. Out of the 981 entries, 767 are monomorphemic. Out of these only 159 are bimanual and heteromorphic. Not all are dextrous (=DH is right hand) but it almost. 
+
+
+To enlarge our dataset, one enhancement technique that we might try is shifting the graph: i.e. move the positions around the space. Just make sure they stay within the frame and everything could be shifted. 

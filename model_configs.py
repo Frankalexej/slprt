@@ -3,11 +3,20 @@
 # This is where we put the preset values
 
 # START
+dropout = 0.5
+
 in_dim = 63  # 21 x 3
 hid_dim = 5 # the number of features we want the model to be learning
-out_dim = 65    # just set here for the moment, depends on how many labels we have
+out_dim = 93 # number of classes in total
 
 # other latent dimensions in encoder and decoder
-enc_lat_dims = []
-dec_lat_dims = []
+enc_lat_dims = [32, 16]
+dec_lat_dims = [16, 32]
+
+
+# Train configs
+BATCH_SIZE = 32
+LOADER_WORKER = 0
+EPOCHS = 50
+BASE = 0
 

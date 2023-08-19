@@ -1,6 +1,7 @@
 import pickle
 import collections
 import os
+import numpy as np
 
 class AnyIO: 
     # This class is a wrapper to read and write pickle files
@@ -36,3 +37,13 @@ class ResultIO:
         
         with open(IOPath, 'wb') as file:
             pickle.dump(clean_res, file)
+
+
+class NP_Compress: 
+    @staticmethod
+    def save(array, filename): 
+        np.savez_compressed(filename, data=array)
+    
+    @staticmethod
+    def load(filename): 
+        return np.load(filename)["data"]
