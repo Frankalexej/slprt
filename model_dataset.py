@@ -66,13 +66,14 @@ class GuideReader:
                 return GuideExtract()
 
 class HandLandmarkData: 
-    def __init__(self, all_graph_dir=det_dir):
+    def __init__(self, all_graph_dir=det_dir, cutoff_range=None):
         """
         all_graph_dir: the hyper-dir of each video's hand lms
         """
         # init data and tag
         self.data = np.empty((0, 21, 3))
         self.tag = np.array([])
+        self.cutoff_range = cutoff_range
 
         guidedata = GuideReader(guide_path)
         for vd in os.listdir(all_graph_dir): 
@@ -98,11 +99,48 @@ class HandLandmarkData:
         print("Data initiated. Count: " + str(self.tag.shape[0]))
 
     @staticmethod
-    def __grab_data__(filename, side): 
+    def __cut_frames__(arr, cut_start, cut_end):
+        """
+        Cut a portion of the array along the frame axis between x and y ratios.
+
+        Parameters:
+        - arr: NumPy array of shape (frames, 21, 3)
+        - cut_start: Start ratio (between 0 and 1)
+        - cut_end: End ratio (between 0 and 1)
+
+        Returns:
+        - Cut array of shape (new_frames, 21, 3)
+        """
+
+        if cut_start < 0 or cut_end > 1 or cut_start >= cut_end:
+            raise ValueError("Invalid cutoff range")
+
+        num_frames = arr.shape[0]
+        start_index = int(num_frames * cut_start)
+        end_index = int(num_frames * cut_end)
+
+        # Ensure the indices are within bounds
+        start_index = max(0, start_index)
+        end_index = min(num_frames, end_index)
+
+        return arr[start_index:end_index]
+
+    @staticmethod
+    def __grab_data__(filename, side, cutoff_range=None): 
         find_name = "{}_{}".format(side, filename)
         gt = GraphTool(graph_dir, find_name)
         gt.delete_empty()
-        return gt.get_features(flatten=False)
+
+        features = gt.get_features(flatten=False)
+        
+        # cut the surroundings if needed, this is for making the testing set
+        # it would be best if we have a cleaner data for training, but this might further decrease the data size
+        # therefore we only use more largely cut version for testing data 
+
+        if cutoff_range and isinstance(cutoff_range, list): 
+            features = HandLandmarkData.__cut_frames__(features, cut_start=cutoff_range[0], cut_end=cutoff_range[1])
+        
+        return features
     
     def save_data(self, file_prefix): 
         NP_Compress.save(self.data, os.path.join(data_dir, file_prefix + "_data.npz"))
@@ -143,4 +181,4 @@ class HandshapeDict:
 
 if __name__ == '__main__':
     hlmd = HandLandmarkData()
-    hlmd.save_data("cynthia_data")
+    hlmd.save_data("cynthia_train")
