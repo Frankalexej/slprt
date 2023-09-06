@@ -20,3 +20,5 @@ LOADER_WORKER = 0
 EPOCHS = 50
 BASE = 0
 
+# data split suffix
+suffixes = ["_train", "_validate"]

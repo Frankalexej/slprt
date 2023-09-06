@@ -2,9 +2,19 @@ import os
 import random
 import shutil
 
-from paths import src_dir
+from paths import det_dir
+from model_configs import suffixes
 
-def random_split(parent_dir, ratios, output_dirs):
+def add_suffix_to_path(path, suffix): 
+    # Check if the path already ends with a slash
+    if path.endswith('/'):
+        new_path = path.rstrip('/') + suffix + '/'
+    else:
+        new_path = path + suffix + '/'
+    return new_path
+
+
+def random_split(parent_dir, ratio_train=0.8):
     """
     Randomly separate subdirectories within a parent directory and move them to
     separate output directories according to the given ratios.
@@ -17,13 +27,12 @@ def random_split(parent_dir, ratios, output_dirs):
     Returns:
     - None
     """
+    # define the suffixes of the different data chunks
 
-    if sum(ratios) != 1.0:
-        raise ValueError("Ratios must sum to 1.0")
+    # adding suffixes to form output directories
+    output_dirs = [add_suffix_to_path(parent_dir, suffix) for suffix in suffixes]
 
-    if len(ratios) != len(output_dirs):
-        raise ValueError("The number of output directories must match the number of ratios")
-
+    # count the subdirectories that will be moved
     subdirectories = [d for d in os.listdir(parent_dir) if os.path.isdir(os.path.join(parent_dir, d))]
 
     # Create output directories if they don't exist
@@ -32,18 +41,23 @@ def random_split(parent_dir, ratios, output_dirs):
 
     random.shuffle(subdirectories)
 
+    # calculate the position of split
     total_dirs = len(subdirectories)
-    split_points = [int(total_dirs * ratio) for ratio in ratios]
+    split_point = int(ratio_train * total_dirs)
 
-    for i, output_dir in enumerate(output_dirs):
-        move_dirs = subdirectories[:split_points[i]]
-        for move_dir in move_dirs:
+    train_dirs = subdirectories[:split_point]
+    test_dirs = subdirectories[split_point:]
+    both_dirs = [train_dirs, test_dirs]
+
+    for move_idx in range(len(both_dirs)): 
+        move_dirs = both_dirs[move_idx]
+        output_dir = output_dirs[move_idx]
+
+        for move_dir in move_dirs: 
             source = os.path.join(parent_dir, move_dir)
             destination = os.path.join(output_dir, move_dir)
             shutil.move(source, destination)
 
-        subdirectories = subdirectories[split_points[i]:]
-
 
 if __name__ == '__main__':
-    random_split(os.path.join(src_dir, "try/one/"), [0.3, 0.7], [os.path.join(src_dir, "try/first/"), os.path.join(src_dir, "try/second/")])
+    random_split(os.path.join(det_dir, "Cynthia_full"), 0.8)    # if the name is not Cynthia_full, then must change name here. 
