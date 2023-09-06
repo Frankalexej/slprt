@@ -53,9 +53,9 @@ class HandshapePredictor(nn.Module):
 
         self.encoder = nn.Sequential(
             LinPack(input_dim, enc_lat_dims[0]), 
-            ResBlock(enc_lat_dims[0]), 
+            # ResBlock(enc_lat_dims[0]), 
             LinPack(enc_lat_dims[0], enc_lat_dims[1]), 
-            ResBlock(enc_lat_dims[1]), 
+            # ResBlock(enc_lat_dims[1]), 
             # LinPack(enc_lat_dims[1], enc_lat_dims[2]),
             # ResBlock(enc_lat_dims[2]), 
             nn.Linear(enc_lat_dims[1], hid_dim), 

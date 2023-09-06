@@ -66,36 +66,37 @@ class GuideReader:
                 return GuideExtract()
 
 class HandLandmarkData: 
-    def __init__(self, all_graph_dir=det_dir, cutoff_range=None):
+    def __init__(self, graph_set_dir=None, cutoff_range=None):
         """
-        all_graph_dir: the hyper-dir of each video's hand lms
+        graph_set_dir: the hyper-dir of each video's hand lms (i.e. one dataset)
         """
+        if not graph_set_dir: 
+            raise Exception("Empty graph set directory! ")
         # init data and tag
         self.data = np.empty((0, 21, 3))
         self.tag = np.array([])
         self.cutoff_range = cutoff_range
 
         guidedata = GuideReader(guide_path)
-        for vd in os.listdir(all_graph_dir): 
-            for clip in os.listdir(all_graph_dir + vd + "/"): 
-                extract = guidedata.extract(clip)
-                if extract.is_ok(): 
-                    if extract.dexter: 
-                        feats = self.__grab_data__(clip, "Right")   # (x, 21, 3)
-                        self.data = np.concatenate((self.data, feats))
-                        frame, lm, dim = feats.shape
-                        tag = np.array([extract.dexter] * frame)
-                        self.tag = np.concatenate((self.tag, tag))
-                    
-                    if extract.sinister: 
-                        self.__grab_data__(clip, "Left")
-                        self.data = np.concatenate((self.data, feats))
-                        frame, lm, dim = feats.shape
-                        tag = np.array([extract.dexter] * frame)
-                        self.tag = np.concatenate((self.tag, tag))
-                else: 
-                    # else pass this file, because no data could match
-                    continue
+        for clip in os.listdir(graph_set_dir): 
+            extract = guidedata.extract(clip)
+            if extract.is_ok(): 
+                if extract.dexter: 
+                    feats = self.__grab_data__(clip, "Right", cutoff_range=cutoff_range)   # (x, 21, 3)
+                    self.data = np.concatenate((self.data, feats))
+                    frame, lm, dim = feats.shape
+                    tag = np.array([extract.dexter] * frame)
+                    self.tag = np.concatenate((self.tag, tag))
+                
+                if extract.sinister: 
+                    feats = self.__grab_data__(clip, "Left", cutoff_range=cutoff_range)
+                    self.data = np.concatenate((self.data, feats))
+                    frame, lm, dim = feats.shape
+                    tag = np.array([extract.dexter] * frame)
+                    self.tag = np.concatenate((self.tag, tag))
+            else: 
+                # else pass this file, because no data could match
+                continue
         print("Data initiated. Count: " + str(self.tag.shape[0]))
 
     @staticmethod
@@ -137,9 +138,8 @@ class HandLandmarkData:
         # it would be best if we have a cleaner data for training, but this might further decrease the data size
         # therefore we only use more largely cut version for testing data 
 
-        if cutoff_range and isinstance(cutoff_range, list): 
+        if cutoff_range: 
             features = HandLandmarkData.__cut_frames__(features, cut_start=cutoff_range[0], cut_end=cutoff_range[1])
-        
         return features
     
     def save_data(self, file_prefix): 
@@ -180,5 +180,13 @@ class HandshapeDict:
 
 
 if __name__ == '__main__':
-    hlmd = HandLandmarkData()
-    hlmd.save_data("cynthia_train")
+    # training dataset 
+    train_hlmd = HandLandmarkData(graph_set_dir=os.path.join(det_dir, data_train_name))
+    train_hlmd.save_data(data_train_name)
+    ## Count: 15663
+
+    # validation (testing) dataset
+    val_hlmd = HandLandmarkData(graph_set_dir=os.path.join(det_dir, data_validation_name))  # , cutoff_range=[0.3, 0.9]
+    # i.e. only keeping the 30%~70% data
+    val_hlmd.save_data(data_validation_name)
+    ## Count: 2744

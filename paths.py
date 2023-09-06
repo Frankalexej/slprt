@@ -32,6 +32,12 @@ model_save_dir = main_dir + "model_save/"
 guide_path = src_dir + "HKSL_Citation_Phon_Coding_full_guide.csv"
 
 outstyle_path = main_dir + "outstyle.css"
+# End of define
+
+# define names
+data_name = "Cynthia_full"
+data_train_name = data_name + "_train"
+data_validation_name = data_name + "_val"
 
 if __name__ == '__main__':
     # For all paths defined, run mk()

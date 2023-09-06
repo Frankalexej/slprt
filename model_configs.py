@@ -16,9 +16,6 @@ dec_lat_dims = [16, 32]
 
 # Train configs
 BATCH_SIZE = 32
-LOADER_WORKER = 0
+LOADER_WORKER = 16
 EPOCHS = 50
 BASE = 0
-
-# data split suffix
-suffixes = ["_train", "_validate"]
