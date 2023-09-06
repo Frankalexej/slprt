@@ -44,12 +44,6 @@ def random_split(parent_dir, ratios, output_dirs):
 
         subdirectories = subdirectories[split_points[i]:]
 
-# Example usage:
-# Assuming you have a parent directory containing subdirectories, and you want to
-# split them into two directories ('output_dir1' and 'output_dir2') with a 70-30 ratio.
-# split_and_move_directories('parent_directory', [0.7, 0.3], ['output_dir1', 'output_dir2'])
-
-
 
 if __name__ == '__main__':
     random_split(os.path.join(src_dir, "try/one/"), [0.3, 0.7], [os.path.join(src_dir, "try/first/"), os.path.join(src_dir, "try/second/")])
