@@ -6,7 +6,7 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
-from model_configs import in_dim, out_dim, hid_dim, enc_lat_dims, dec_lat_dims, dropout
+from model_configs import *
 
 # MODELS
 class ResBlock(nn.Module):
@@ -41,8 +41,98 @@ class LinPack(nn.Module):
         x = self.relu(x)
         # x = self.dropout(x)
         return x
+    
+class ConvPack(nn.Module): 
+    def __init__(self, length, in_channels, out_channels, kernal_size):
+        super(ConvPack, self).__init__()
+        self.conv = nn.Conv1d(in_channels=in_channels, 
+                              out_channels=out_channels, 
+                              kernel_size=kernal_size)
+        self.act = nn.ReLU()
+        self.maxpooling = nn.MaxPool1d(kernel_size=length - kernal_size + 1)
+
+    def forward(self, x): 
+        x = self.conv(x)
+        x = self.act(x)
+        x = self.maxpooling(x)
+        return x
 
 
+class HandshapePredictor(nn.Module):
+    def __init__(self, input_dim=in_dim, 
+                 enc_lat_dims=enc_lat_dims, 
+                 hid_dim=hid_dim, 
+                 dec_lat_dims=dec_lat_dims, 
+                 output_dim=out_dim, 
+                 window_sizes=window_sizes):
+        super(HandshapePredictor, self).__init__()
+
+        self.convs = nn.ModuleList([
+            ConvPack(length=length, 
+                     in_channels=input_dim, 
+                     out_channels=hid_dim, 
+                     kernal_size=ws)
+                     for ws in window_sizes
+        ])
+
+        self.encoder = nn.Sequential(
+            # LinPack(input_dim, enc_lat_dims[0]), 
+            # ResBlock(enc_lat_dims[0]), 
+            # LinPack(enc_lat_dims[0], enc_lat_dims[1]), 
+            # ResBlock(enc_lat_dims[1]), 
+            # LinPack(enc_lat_dims[1], enc_lat_dims[2]),
+            # ResBlock(enc_lat_dims[2]), 
+            nn.Linear(hid_dim * len(window_sizes), hid_dim), 
+            nn.Dropout()
+        )
+
+        self.decoder =  nn.Sequential(
+            # LinPack(hid_dim, dec_lat_dims[0]), 
+            # ResBlock(dec_lat_dims[0]), 
+            # LinPack(dec_lat_dims[0], dec_lat_dims[1]), 
+            # ResBlock(dec_lat_dims[1]), 
+            # nn.Linear(dec_lat_dims[1], output_dim),
+            nn.Linear(hid_dim, out_dim)
+        )
+
+        
+
+    def forward(self, x):
+        x = x.permute(0, 2, 1)  # (B, L, D) -> (B, D, L), as required by Conv1d
+        x = [conv(x) for conv in self.convs]
+        x = torch.cat(x, dim=1)
+        x = x.squeeze()
+        h = self.encoder(x)
+        pred_probs = self.decoder(h)
+        return pred_probs
+    
+
+    def predict(self, x, handshapeDict): 
+        x = x.permute(0, 2, 1)  # (B, L, D) -> (B, D, L), as required by Conv1d
+        x = [conv(x) for conv in self.convs]
+        x = torch.cat(x, dim=1)
+        x = x.squeeze()
+        h = self.encoder(x)
+        pred_probs = self.decoder(h)
+        pred_probs =F.softmax(pred_probs, dim=1)
+        class_pred = torch.argmax(pred_probs, dim=1)
+        pred_tag = handshapeDict.batch_map(class_pred)
+        return h, pred_tag
+    
+    def encode(self, x): 
+        x = x.permute(0, 2, 1)  # (B, L, D) -> (B, D, L), as required by Conv1d
+        x = [conv(x) for conv in self.convs]
+        x = torch.cat(x, dim=1)
+        x = x.squeeze()
+        h = self.encoder(x)
+        return h
+    
+
+
+
+#######################################################################################
+#Here we put old items. #
+"""
 class HandshapePredictor(nn.Module):
     def __init__(self, input_dim=in_dim, 
                  enc_lat_dims=enc_lat_dims, 
@@ -100,3 +190,4 @@ class HandshapePredictor(nn.Module):
 
         h = self.encoder(x)
         return h
+"""
