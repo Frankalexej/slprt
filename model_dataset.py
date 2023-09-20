@@ -11,7 +11,61 @@ import pandas as pd
 import numpy as np
 from torch.utils.data import Dataset
 import torch
+import pickle
 # START
+
+class DS_Tools:
+    @ staticmethod
+    def save_indices(filename, my_list):
+        try:
+            with open(filename, 'wb') as file:
+                pickle.dump(my_list, file)
+            return True
+        except Exception as e:
+            print(f"An error occurred while saving the list: {e}")
+            return False
+
+    @ staticmethod    
+    def read_indices(filename):
+        try:
+            with open(filename, 'rb') as file:
+                my_list = pickle.load(file)
+            return my_list
+        except Exception as e:
+            print(f"An error occurred while reading the list: {e}")
+            return None
+
+    @staticmethod
+    def cut_frames(arr, cut_range=None):
+        """
+        Cut a portion of the array along the frame axis between x and y ratios.
+
+        Parameters:
+        - arr: NumPy array of shape (frames, 21, 3)
+        - cut_start: Start ratio (between 0 and 1)
+        - cut_end: End ratio (between 0 and 1)
+
+        Returns:
+        - Cut array of shape (new_frames, 21, 3)
+        """
+        # cut the surroundings if needed, this is for making the testing set
+        # it would be best if we have a cleaner data for training, but this might further decrease the data size
+        # therefore we only use more largely cut version for testing data 
+        if cut_range is None: 
+            return arr
+        cut_start, cut_end = cut_range
+        if cut_start < 0 or cut_end > 1 or cut_start >= cut_end:
+            raise ValueError("Invalid cutoff range")
+
+        num_frames = arr.shape[0]
+        start_index = int(num_frames * cut_start)
+        end_index = int(num_frames * cut_end)
+
+        # Ensure the indices are within bounds
+        start_index = max(0, start_index)
+        end_index = min(num_frames, end_index)
+
+        return arr[start_index:end_index]
 
 class GuideExtract:
     # this is a messanger class, only carrying some data.
@@ -66,7 +120,7 @@ class GuideReader:
                 return GuideExtract()
 
 class HandLandmarkData: 
-    def __init__(self, graph_set_dir=None, cutoff_range=None):
+    def __init__(self, graph_set_dir=None):
         """
         graph_set_dir: the hyper-dir of each video's hand lms (i.e. one dataset)
         """
@@ -75,24 +129,23 @@ class HandLandmarkData:
         # init data and tag
         self.data = np.empty((0, 21, 3))
         self.tag = np.array([])
-        self.cutoff_range = cutoff_range
 
         guidedata = GuideReader(guide_path)
         for clip in os.listdir(graph_set_dir): 
             extract = guidedata.extract(clip)
             if extract.is_ok(): 
                 if extract.dexter: 
-                    feats = self.__grab_data__(clip, "Right", cutoff_range=cutoff_range)   # (x, 21, 3)
+                    feats = self.__grab_data__(clip, "Right")   # (x, 21, 3)
                     self.data = np.concatenate((self.data, feats))
                     frame, lm, dim = feats.shape
                     tag = np.array([extract.dexter] * frame)
                     self.tag = np.concatenate((self.tag, tag))
                 
                 if extract.sinister: 
-                    feats = self.__grab_data__(clip, "Left", cutoff_range=cutoff_range)
+                    feats = self.__grab_data__(clip, "Left")
                     self.data = np.concatenate((self.data, feats))
                     frame, lm, dim = feats.shape
-                    tag = np.array([extract.dexter] * frame)
+                    tag = np.array([extract.sinister] * frame)
                     self.tag = np.concatenate((self.tag, tag))
             else: 
                 # else pass this file, because no data could match
@@ -100,46 +153,12 @@ class HandLandmarkData:
         print("Data initiated. Count: " + str(self.tag.shape[0]))
 
     @staticmethod
-    def __cut_frames__(arr, cut_start, cut_end):
-        """
-        Cut a portion of the array along the frame axis between x and y ratios.
-
-        Parameters:
-        - arr: NumPy array of shape (frames, 21, 3)
-        - cut_start: Start ratio (between 0 and 1)
-        - cut_end: End ratio (between 0 and 1)
-
-        Returns:
-        - Cut array of shape (new_frames, 21, 3)
-        """
-
-        if cut_start < 0 or cut_end > 1 or cut_start >= cut_end:
-            raise ValueError("Invalid cutoff range")
-
-        num_frames = arr.shape[0]
-        start_index = int(num_frames * cut_start)
-        end_index = int(num_frames * cut_end)
-
-        # Ensure the indices are within bounds
-        start_index = max(0, start_index)
-        end_index = min(num_frames, end_index)
-
-        return arr[start_index:end_index]
-
-    @staticmethod
-    def __grab_data__(filename, side, cutoff_range=None): 
+    def __grab_data__(filename, side): 
         find_name = "{}_{}".format(side, filename)
         gt = GraphTool(graph_dir, find_name)
         gt.delete_empty()
 
         features = gt.get_features(flatten=False)
-        
-        # cut the surroundings if needed, this is for making the testing set
-        # it would be best if we have a cleaner data for training, but this might further decrease the data size
-        # therefore we only use more largely cut version for testing data 
-
-        if cutoff_range: 
-            features = HandLandmarkData.__cut_frames__(features, cut_start=cutoff_range[0], cut_end=cutoff_range[1])
         return features
     
     def save_data(self, file_prefix): 
@@ -175,18 +194,22 @@ class HandshapeDict:
     def batch_map(self, class_index_tensor): 
         class_list = [self.reverse_dictionary[index.item()] for index in class_index_tensor]
         return class_list
+    
+class HandshapeIndexor(Dataset): 
+    def __init__(self, tag_path, sign_super_path):
+        self.tag = NP_Compress.load(tag_path)
+        self.sign_idxes = os.listdir(sign_super_path)
+    # REQUIRED: provide size of dataset (= #images)
+    def __len__(self) :
+        return self.tag.shape[0]
+
+    def __getitem__(self, idx): 
+        return self.sign_idxes[idx]
 
 
 
 
 if __name__ == '__main__':
     # training dataset 
-    train_hlmd = HandLandmarkData(graph_set_dir=os.path.join(det_dir, data_train_name))
-    train_hlmd.save_data(data_train_name)
-    ## Count: 15663
-
-    # validation (testing) dataset
-    val_hlmd = HandLandmarkData(graph_set_dir=os.path.join(det_dir, data_validation_name))  # , cutoff_range=[0.3, 0.9]
-    # i.e. only keeping the 30%~70% data
-    val_hlmd.save_data(data_validation_name)
-    ## Count: 2744
+    hlmd = HandLandmarkData(graph_set_dir=os.path.join(det_dir, data_name))
+    hlmd.save_data(data_name)

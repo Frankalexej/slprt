@@ -10,7 +10,7 @@ hid_dim = 5 # the number of features we want the model to be learning
 out_dim = 93 # number of classes in total
 
 # other latent dimensions in encoder and decoder
-enc_lat_dims = [32, 16]
+enc_lat_dims = [32, 16, 8]
 dec_lat_dims = [16, 32]
 
 

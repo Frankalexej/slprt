@@ -16,4 +16,10 @@ the data is having quite a lot without obvious hs. These mainly come from interp
 2. Out of the 981 entries, 767 are monomorphemic. Out of these only 159 are bimanual and heteromorphic. Not all are dextrous (=DH is right hand) but it almost. 
 
 
-To enlarge our dataset, one enhancement technique that we might try is shifting the graph: i.e. move the positions around the space. Just make sure they stay within the frame and everything could be shifted. 
+nique that we might try is shifting the graph: i.e. move the positions around the space. Just make sure they stay wTo enlarge our dataset, one enhancement techithin the frame and everything could be shifted. 
+
+
+The strange problem if we separate training and validation datasets it cannot learn, but when on one dataset and separated it performs well. 
+My guess is that if we have two datasets something is totally different from having two subsets of one dataset. 
+Therefore, we will consider using the same technique used in wavln for saving separation so that when plotting results we can avoid having those trained. 
+But for shrinking frame we have to do that outside of dataset, like before feeding data into model. 

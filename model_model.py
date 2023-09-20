@@ -33,12 +33,12 @@ class LinPack(nn.Module):
         self.lin = nn.Linear(n_in, n_out)
         self.relu = nn.ReLU()
         # self.batch_norm = nn.BatchNorm1d(num_features=n_out)
-        # self.dropout = nn.Dropout(p=dropout)
+        # self.dropout = nn.Dropout(p=0.5)
 
     def forward(self, x):
         x = self.lin(x)
-        x = self.relu(x)
         # x = self.batch_norm(x)
+        x = self.relu(x)
         # x = self.dropout(x)
         return x
 
@@ -53,12 +53,12 @@ class HandshapePredictor(nn.Module):
 
         self.encoder = nn.Sequential(
             LinPack(input_dim, enc_lat_dims[0]), 
-            ResBlock(enc_lat_dims[0]), 
+            # ResBlock(enc_lat_dims[0]), 
             LinPack(enc_lat_dims[0], enc_lat_dims[1]), 
-            ResBlock(enc_lat_dims[1]), 
-            # LinPack(enc_lat_dims[1], enc_lat_dims[2]),
+            # ResBlock(enc_lat_dims[1]), 
+            LinPack(enc_lat_dims[1], enc_lat_dims[2]),
             # ResBlock(enc_lat_dims[2]), 
-            nn.Linear(enc_lat_dims[1], hid_dim), 
+            nn.Linear(enc_lat_dims[2], hid_dim), 
         )
 
         self.decoder =  nn.Sequential(
