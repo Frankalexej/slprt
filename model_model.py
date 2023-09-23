@@ -68,11 +68,16 @@ class HandshapePredictor(nn.Module):
         super(HandshapePredictor, self).__init__()
 
         self.convs = nn.ModuleList([
-            ConvPack(length=length, 
-                     in_channels=input_dim, 
-                     out_channels=hid_dim, 
-                     kernal_size=ws)
-                     for ws in window_sizes
+            nn.Sequential(
+                nn.Conv1d(
+                    in_channels=input_dim, 
+                    out_channels=hid_dim, 
+                    kernel_size=ws
+                ), 
+                nn.MaxPool1d(kernel_size=length - ws + 1), 
+                nn.ReLU(), 
+                # nn.BatchNorm1d(num_features=hid_dim)
+            ) for ws in window_sizes
         ])
 
         self.encoder = nn.Sequential(
@@ -87,12 +92,12 @@ class HandshapePredictor(nn.Module):
         )
 
         self.decoder =  nn.Sequential(
-            # LinPack(hid_dim, dec_lat_dims[0]), 
+            LinPack(hid_dim, dec_lat_dims[1]), 
             # ResBlock(dec_lat_dims[0]), 
             # LinPack(dec_lat_dims[0], dec_lat_dims[1]), 
             # ResBlock(dec_lat_dims[1]), 
             # nn.Linear(dec_lat_dims[1], output_dim),
-            nn.Linear(hid_dim, out_dim)
+            nn.Linear(dec_lat_dims[1], out_dim)
         )
 
         

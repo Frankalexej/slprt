@@ -13,7 +13,7 @@ length = 21 # number of landmarks
 # other latent dimensions in encoder and decoder
 enc_lat_dims = [32, 16, 8]
 dec_lat_dims = [16, 32]
-window_sizes = [3, 5, 7, 9]
+window_sizes = [3, 5, 7, 9, 11]
 
 # Train configs
 BATCH_SIZE = 32
