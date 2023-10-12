@@ -8,6 +8,18 @@ from torch import nn
 import torch.nn.functional as F
 from model_configs import *
 
+def flatten(x, xyz_together=True): 
+    if xyz_together: 
+        batch_num, lm_num, dim_num = x.size()
+        return x.view(batch_num, -1)
+
+    else: 
+        x_values = x[:, :, 0]
+        y_values = x[:, :, 1]
+        z_values = x[:, :, 2]
+        # Concatenate the grouped values
+        return torch.cat((x_values, y_values, z_values), dim=1)
+
 # MODELS
 class ResBlock(nn.Module):
     def __init__(self, n_chans):
@@ -33,13 +45,13 @@ class LinPack(nn.Module):
         self.lin = nn.Linear(n_in, n_out)
         self.relu = nn.ReLU()
         # self.batch_norm = nn.BatchNorm1d(num_features=n_out)
-        self.dropout = nn.Dropout(p=0.7)
+        # self.dropout = nn.Dropout(p=0.7)
 
     def forward(self, x):
         x = self.lin(x)
         # x = self.batch_norm(x)
         x = self.relu(x)
-        x = self.dropout(x)
+        # x = self.dropout(x)
         return x
     
 class ConvPack(nn.Module): 
@@ -143,7 +155,7 @@ class LinearHandshapePredictor(nn.Module):
 
         self.encoder = nn.Sequential(
             LinPack(input_dim, enc_lat_dims[0]), 
-            # ResBlock(enc_lat_dims[0]), 
+            ResBlock(enc_lat_dims[0]), 
             LinPack(enc_lat_dims[0], enc_lat_dims[1]), 
             # ResBlock(enc_lat_dims[1]), 
             # LinPack(enc_lat_dims[1], enc_lat_dims[2]),
@@ -153,7 +165,7 @@ class LinearHandshapePredictor(nn.Module):
 
         self.decoder =  nn.Sequential(
             LinPack(hid_dim, dec_lat_dims[0]), 
-            # ResBlock(dec_lat_dims[0]), 
+            ResBlock(dec_lat_dims[0]), 
             LinPack(dec_lat_dims[0], dec_lat_dims[1]), 
             # ResBlock(dec_lat_dims[1]), 
             nn.Linear(dec_lat_dims[1], output_dim),
@@ -162,8 +174,7 @@ class LinearHandshapePredictor(nn.Module):
         
 
     def forward(self, x):
-        batch_num, lm_num, dim_num = x.size()
-        x = x.view(batch_num, -1)   # pack the matrix into a vector
+        x = flatten(x, xyz_together=False)
 
         h = self.encoder(x)
         pred_probs = self.decoder(h)
@@ -174,8 +185,7 @@ class LinearHandshapePredictor(nn.Module):
     
 
     def predict(self, x, handshapeDict): 
-        batch_num, lm_num, dim_num = x.size()
-        x = x.view(batch_num, -1)   # pack the matrix into a vector
+        x = flatten(x, xyz_together=False)
 
         h = self.encoder(x)
         pred_probs = self.decoder(h)
@@ -185,8 +195,7 @@ class LinearHandshapePredictor(nn.Module):
         return h, pred_tag
     
     def encode(self, x): 
-        batch_num, lm_num, dim_num = x.size()
-        x = x.view(batch_num, -1)   # pack the matrix into a vector
+        x = flatten(x, xyz_together=False)
 
         h = self.encoder(x)
         return h

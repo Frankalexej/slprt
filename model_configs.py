@@ -8,6 +8,8 @@ dropout = 0.5
 in_dim = 63  # 21 x 3
 hid_dim = 5 # the number of features we want the model to be learning
 out_dim = 93 # number of classes in total
+
+original_dim = 3
 length = 21 # number of landmarks
 
 # other latent dimensions in encoder and decoder
