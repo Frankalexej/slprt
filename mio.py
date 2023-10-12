@@ -47,3 +47,7 @@ class NP_Compress:
     @staticmethod
     def load(filename): 
         return np.load(filename)["data"]
+    
+
+def mk(dir): 
+    os.makedirs(dir, exist_ok = True)
