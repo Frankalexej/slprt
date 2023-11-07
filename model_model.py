@@ -157,7 +157,7 @@ class LinearHandshapePredictor(nn.Module):
             LinPack(input_dim, enc_lat_dims[0]), 
             ResBlock(enc_lat_dims[0]), 
             LinPack(enc_lat_dims[0], enc_lat_dims[1]), 
-            # ResBlock(enc_lat_dims[1]), 
+            ResBlock(enc_lat_dims[1]), 
             # LinPack(enc_lat_dims[1], enc_lat_dims[2]),
             # ResBlock(enc_lat_dims[2]), 
             nn.Linear(enc_lat_dims[1], hid_dim), 
@@ -165,7 +165,7 @@ class LinearHandshapePredictor(nn.Module):
 
         self.decoder =  nn.Sequential(
             LinPack(hid_dim, dec_lat_dims[0]), 
-            ResBlock(dec_lat_dims[0]), 
+            # ResBlock(dec_lat_dims[0]), 
             LinPack(dec_lat_dims[0], dec_lat_dims[1]), 
             # ResBlock(dec_lat_dims[1]), 
             nn.Linear(dec_lat_dims[1], output_dim),
@@ -182,7 +182,6 @@ class LinearHandshapePredictor(nn.Module):
         # class_pred = nn.Softmax(class_pred)
 
         return pred_probs
-    
 
     def predict(self, x, handshapeDict): 
         x = flatten(x, xyz_together=False)

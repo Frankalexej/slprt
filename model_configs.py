@@ -13,8 +13,8 @@ original_dim = 3
 length = 21 # number of landmarks
 
 # other latent dimensions in encoder and decoder
-enc_lat_dims = [32, 16]
-dec_lat_dims = [16, 32]
+enc_lat_dims = [128, 32]
+dec_lat_dims = [16, 64]
 """
 enc_lat_dims = [32, 16, 8]
 dec_lat_dims = [16, 32]
