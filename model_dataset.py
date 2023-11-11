@@ -11,6 +11,7 @@ import pandas as pd
 import numpy as np
 from torch.utils.data import Dataset
 import pickle
+from misc_progress_bar import draw_progress_bar
 # START
 
 class DS_Tools:
@@ -130,8 +131,10 @@ class HandLandmarkData:
         self.tag = np.array([])
 
         guidedata = GuideReader(guide_path)
-        for clip in os.listdir(graph_set_dir): 
+        total = len(os.listdir(graph_set_dir))
+        for idx, clip in enumerate(os.listdir(graph_set_dir)): 
             extract = guidedata.extract(clip)
+            draw_progress_bar(idx, total)
             if extract.is_ok(): 
                 if extract.dexter: 
                     feats = self.__grab_data__(clip, "Right")   # (x, 21, 3)
@@ -168,17 +171,18 @@ class HandLandmarkData:
 # Here we define the dataset as will be used in training
 
 class HandshapeDataset(Dataset): 
-    def __init__(self, data_path, tag_path):
+    def __init__(self, data_path, tag_path, dictionary):
         self.data = NP_Compress.load(data_path)
         self.tag = NP_Compress.load(tag_path)
-        self.dictionary = {tag: index for index, tag in enumerate(sorted(set(self.tag)))}
+        # self.dictionary = {tag: index for index, tag in enumerate(sorted(set(self.tag)))}
+        self.dictionary = dictionary
         
     # REQUIRED: provide size of dataset (= #images)
     def __len__(self) :
         return self.tag.shape[0]
 
     def __getitem__(self, idx): 
-        return self.data[idx], self.dictionary[self.tag[idx]]
+        return self.data[idx], self.dictionary.tag2idx(self.tag[idx])
     
 
 class HandshapeDict: 
@@ -190,8 +194,33 @@ class HandshapeDict:
     def get_dict(self): 
         return self.dictionary
     
+    def tag2idx(self, tag): 
+        return self.dictionary[tag]
+    
+    def idx2tag(self, idx): 
+        return self.reverse_dictionary[idx]
+    
     def batch_map(self, class_index_tensor): 
         class_list = [self.reverse_dictionary[index.item()] for index in class_index_tensor]
+        return class_list
+    
+class FixedHandshapeDict: 
+    def __init__(self) -> None:
+        self.charset = [')', ',', '-', '0', '1', '2', '3', '4', '5', '6', '8', ':', ';', '<', '=', '>', '?', 'A', 'B', 'C', 'D', 'E', 'F', 'H', 'I', 'J', 'L', 'M', 'N', 'O', 'P', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '\\', 'b', 'd', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '}']
+        self.tag2idx_dict = {tag: index for index, tag in enumerate(self.charset)}
+        self.idx2tag_dict = {v: k for k, v in self.tag2idx_dict.items()}
+
+    def get_length(self): 
+        return len(self.charset)
+
+    def tag2idx(self, tag): 
+        return self.tag2idx_dict[tag]
+    
+    def idx2tag(self, idx): 
+        return self.idx2tag_dict[idx]
+    
+    def batch_map(self, class_index_tensor): 
+        class_list = [self.idx2tag(index.item()) for index in class_index_tensor]
         return class_list
     
 class HandshapeIndexor(Dataset): 
@@ -210,5 +239,14 @@ class HandshapeIndexor(Dataset):
 
 if __name__ == '__main__':
     # training dataset 
-    hlmd = HandLandmarkData(graph_set_dir=os.path.join(det_dir, data_name))
-    hlmd.save_data(data_name)
+    # hlmd = HandLandmarkData(graph_set_dir=os.path.join(det_dir, data_name))
+    # hlmd.save_data(data_name)
+
+    hlmd = HandLandmarkData(graph_set_dir=os.path.join(det_dir, train_name))
+    hlmd.save_data(train_name)
+
+    hlmd = HandLandmarkData(graph_set_dir=os.path.join(det_dir, test_mono_name))
+    hlmd.save_data(test_mono_name)
+
+    # hlmd = HandLandmarkData(graph_set_dir=os.path.join(det_dir, test_poly_name))
+    # hlmd.save_data(test_poly_name)

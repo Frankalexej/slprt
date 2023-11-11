@@ -44,12 +44,12 @@ class LinPack(nn.Module):
         super(LinPack, self).__init__()
         self.lin = nn.Linear(n_in, n_out)
         self.relu = nn.ReLU()
-        # self.batch_norm = nn.BatchNorm1d(num_features=n_out)
-        # self.dropout = nn.Dropout(p=0.7)
+        self.batch_norm = nn.BatchNorm1d(num_features=n_out)
+        # self.dropout = nn.Dropout(p=0.5)
 
     def forward(self, x):
         x = self.lin(x)
-        # x = self.batch_norm(x)
+        x = self.batch_norm(x)
         x = self.relu(x)
         # x = self.dropout(x)
         return x
@@ -160,7 +160,8 @@ class LinearHandshapePredictor(nn.Module):
             ResBlock(enc_lat_dims[1]), 
             # LinPack(enc_lat_dims[1], enc_lat_dims[2]),
             # ResBlock(enc_lat_dims[2]), 
-            nn.Linear(enc_lat_dims[1], hid_dim), 
+            LinPack(enc_lat_dims[1], hid_dim), 
+            # nn.Linear(enc_lat_dims[1], hid_dim), 
         )
 
         self.decoder =  nn.Sequential(
@@ -168,7 +169,8 @@ class LinearHandshapePredictor(nn.Module):
             # ResBlock(dec_lat_dims[0]), 
             LinPack(dec_lat_dims[0], dec_lat_dims[1]), 
             # ResBlock(dec_lat_dims[1]), 
-            nn.Linear(dec_lat_dims[1], output_dim),
+            LinPack(dec_lat_dims[1], output_dim), 
+            # nn.Linear(dec_lat_dims[1], output_dim),
         )
 
         
@@ -179,7 +181,7 @@ class LinearHandshapePredictor(nn.Module):
         h = self.encoder(x)
         pred_probs = self.decoder(h)
         # .view(size=y_size)
-        # class_pred = nn.Softmax(class_pred)
+        # pred_probs = F.softmax(pred_probs, dim=1)
 
         return pred_probs
 

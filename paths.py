@@ -36,6 +36,10 @@ outstyle_path = main_dir + "outstyle.css"
 
 # define names
 data_name = "Cynthia_full"
+train_name = "Cynthia_train"
+test_mono_name = "Cynthia_test_mono"
+test_poly_name = "Cynthia_test_poly"
+
 data_train_name = data_name + "_train"
 data_validation_name = data_name + "_val"
 
