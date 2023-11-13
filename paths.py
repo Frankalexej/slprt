@@ -37,6 +37,7 @@ __relative_static_resources_dir = "../../../static_resources/"
 
 # define file paths
 guide_path = src_dir + "HKSL_Citation_Phon_Coding_full_guide.csv"
+predict_result_path = src_dir + "HKSL_Prediction.xlsx"
 
 hidview_style_path = __relative_static_resources_dir + "hidview.css"
 predsview_style_path = __relative_static_resources_dir + "predsview.css"

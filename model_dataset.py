@@ -120,8 +120,40 @@ class GuideReader:
                 # non-monomorphic
                 return GuideExtract()
     
-    # def extract_allkinds(self, filename): 
-    #     # this one does not exclude polymorphemic signs, but remember, these signs are not accurate, we only take the first handshape as target. 
+    def extract_allkinds(self, filename): 
+        # this one does not exclude polymorphemic signs, but remember, 
+        # these signs are not accurate, 
+        # we only take the first handshape as target. 
+        entry = self.__search_by_name__(filename=filename)
+        if entry.empty: 
+            return GuideExtract()
+        else: 
+            # search result not empty
+            only_1 = entry['ONLY_1'].iloc[0]
+            
+            side = entry['Side'].iloc[0]
+            dh_1 = entry['DH_1'].iloc[0]
+            oh_1 = entry['OH_1'].iloc[0]
+
+            if side == 'D':
+                right_hand_value = dh_1 if self.__value_acceptable__(dh_1) else None
+                left_hand_value = oh_1 if self.__value_acceptable__(oh_1) else None
+            elif side == 'S':
+                left_hand_value = dh_1 if self.__value_acceptable__(dh_1) else None
+                right_hand_value = oh_1 if self.__value_acceptable__(oh_1) else None
+            if only_1 == 1: 
+                return GuideExtract(
+                    monomorph=1, 
+                    dexter=right_hand_value, 
+                    sinister=left_hand_value
+                )
+            else: 
+                # non-monomorphic
+                return GuideExtract(
+                    monomorph=0, 
+                    dexter=right_hand_value, 
+                    sinister=left_hand_value
+                )
 
 
 class HandLandmarkData: 

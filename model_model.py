@@ -109,7 +109,8 @@ class CNNHandshapePredictor(nn.Module):
             # LinPack(dec_lat_dims[0], dec_lat_dims[1]), 
             # ResBlock(dec_lat_dims[1]), 
             # nn.Linear(dec_lat_dims[1], output_dim),
-            nn.Linear(dec_lat_dims[1], out_dim)
+            # nn.Linear(dec_lat_dims[1], out_dim)
+            LinPack(dec_lat_dims[1], out_dim)
         )
 
         
@@ -160,8 +161,9 @@ class LinearHandshapePredictor(nn.Module):
             ResBlock(enc_lat_dims[1]), 
             # LinPack(enc_lat_dims[1], enc_lat_dims[2]),
             # ResBlock(enc_lat_dims[2]), 
-            LinPack(enc_lat_dims[1], hid_dim), 
-            # nn.Linear(enc_lat_dims[1], hid_dim), 
+            # LinPack(enc_lat_dims[1], hid_dim), 
+            nn.Linear(enc_lat_dims[1], hid_dim), 
+            nn.Sigmoid()
         )
 
         self.decoder =  nn.Sequential(

@@ -20,7 +20,7 @@ enc_lat_dims = [32, 16, 8]
 dec_lat_dims = [16, 32]
 window_sizes = [3, 5, 7, 9, 11]
 """
-window_sizes = [3, 5, 7, 9, 11]
+window_sizes = [3, 5, 7]
 
 # Train configs
 BATCH_SIZE = 32
