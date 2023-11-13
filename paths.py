@@ -25,7 +25,7 @@ spec_pic_dir = src_dir + "spec_pic/"
 
 data_dir = src_dir + "data/"
 
-preds_dir = src_dir + "preds/"
+# preds_dir = src_dir + "preds/"
 
 static_resources_dir = src_dir + "static_resources/"
 handshape_rendering_dir = static_resources_dir + "hs/"
