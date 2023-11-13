@@ -75,7 +75,8 @@ class GuideExtract:
         self.sinister = sinister
     
     def is_ok(self):
-        return self.monomorph == 1 and not (self.dexter and self.sinister)
+        # NOTE: in previous trainings this was wrong, I am not sure why but now fixed: 20231113
+        return self.monomorph == 1 and (self.dexter or self.sinister)
 
 
 class GuideReader:
@@ -118,6 +119,10 @@ class GuideReader:
             else: 
                 # non-monomorphic
                 return GuideExtract()
+    
+    # def extract_allkinds(self, filename): 
+    #     # this one does not exclude polymorphemic signs, but remember, these signs are not accurate, we only take the first handshape as target. 
+
 
 class HandLandmarkData: 
     def __init__(self, graph_set_dir=None):

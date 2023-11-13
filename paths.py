@@ -25,13 +25,24 @@ spec_pic_dir = src_dir + "spec_pic/"
 
 data_dir = src_dir + "data/"
 
+preds_dir = src_dir + "preds/"
+
+static_resources_dir = src_dir + "static_resources/"
+handshape_rendering_dir = static_resources_dir + "hs/"
+
 model_save_dir = main_dir + "model_save/"
+
+__relative_static_resources_dir = "../../../static_resources/"
 # End of define
 
 # define file paths
 guide_path = src_dir + "HKSL_Citation_Phon_Coding_full_guide.csv"
 
-outstyle_path = main_dir + "outstyle.css"
+hidview_style_path = __relative_static_resources_dir + "hidview.css"
+predsview_style_path = __relative_static_resources_dir + "predsview.css"
+predsview_js_path = __relative_static_resources_dir + "predsview.js"
+
+
 # End of define
 
 # define names
