@@ -32,7 +32,7 @@ handshape_rendering_dir = static_resources_dir + "hs/"
 
 model_save_dir = main_dir + "model_save/"
 
-__relative_static_resources_dir = "../../../static_resources/"
+__relative_static_resources_dir = "../../static_resources/"
 # End of define
 
 # define file paths
