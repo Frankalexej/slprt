@@ -25,6 +25,8 @@ spec_pic_dir = src_dir + "spec_pic/"
 
 data_dir = src_dir + "data/"
 
+pred_results_dir = src_dir + "pred_results/"
+
 # preds_dir = src_dir + "preds/"
 
 static_resources_dir = src_dir + "static_resources/"
