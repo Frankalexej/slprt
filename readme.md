@@ -15,3 +15,4 @@
 4. run graph_extract.py
 5. run random_split.py: randomly split the data (defaultly named as "Cynthia_full") into 0.8:0.2 train:validation sets. 
 6. run model_dataset.py
+7. Run codes in 
