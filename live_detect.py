@@ -263,7 +263,8 @@ if __name__ == '__main__':
 
     ts = "1113174414-lin"
     stop_epoch = "597"
-    save_subdir = os.path.join(model_save_dir, "{}/".format(ts))
+    # save_subdir = os.path.join(model_save_dir, "{}/".format(ts))
+    save_subdir = "./"
     model_raw_name = f"{stop_epoch}"
     model_name = model_raw_name + ".pt"
     model_path = os.path.join(save_subdir, model_name)
