@@ -7,7 +7,6 @@ import numpy as np
 from io import BytesIO
 from PIL import Image
 
-
 import torch
 from torch import nn
 from torch import optim
@@ -16,7 +15,6 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from model_dataset import FixedHandshapeDict
 from paths import *
 from model_model import LinearHandshapePredictor
 from model_configs import *
@@ -28,6 +26,25 @@ from model_configs import *
 FLAG_NONE = 0
 FLAG_OK = 1
 FLAG_FILLED = 2 # set FLAG_FILLED = 1 if include interpolated data in interpolation next round
+
+class FixedHandshapeDict: 
+    def __init__(self) -> None:
+        self.charset = [')', ',', '-', '0', '1', '2', '3', '4', '5', '6', '8', ':', ';', '<', '=', '>', '?', 'A', 'B', 'C', 'D', 'E', 'F', 'H', 'I', 'J', 'L', 'M', 'N', 'O', 'P', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '\\', 'b', 'd', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '}']
+        self.tag2idx_dict = {tag: index for index, tag in enumerate(self.charset)}
+        self.idx2tag_dict = {v: k for k, v in self.tag2idx_dict.items()}
+
+    def get_length(self): 
+        return len(self.charset)
+
+    def tag2idx(self, tag): 
+        return self.tag2idx_dict[tag]
+    
+    def idx2tag(self, idx): 
+        return self.idx2tag_dict[idx]
+    
+    def batch_map(self, class_index_tensor): 
+        class_list = [self.idx2tag(index.item()) for index in class_index_tensor]
+        return class_list
 
 def lm_has_side_and_is_at(lm, side):
     # This is a renewed version of lm_has_side_and_is_at, considering the order is not strict
